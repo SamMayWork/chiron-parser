@@ -1,0 +1,41 @@
+[
+    {
+        "preCommands": [
+            {
+                "method": "APPLY",
+                "type": "PRECOMMAND",
+                "content": {
+                    "name": "basic-deployment.yaml",
+                    "value": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: basic-deployment\n  namespace: default\n  labels:\n    app: basic-deployment\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: basic-deployment\n  template:\n    metadata:\n      labels:\n        app: basic-deployment\n    spec:\n      containers:\n      - name: basic-deployment\n        image: ssmay0/simple-container\n        ports:\n        - containerPort: 8080"
+                }
+            },
+            {
+                "method": "WAIT",
+                "type": "PRECOMMAND",
+                "kind": "PODS",
+                "target": "basic-deployment",
+                "equalityOperator": "EQUALS",
+                "value": 3
+            }
+        ],
+        "text": "<h1 id=\"basics-of-deployments\">Basics of Deployments</h1>\n<p>When working with deployments there are some key commands that you should know:</p>\n<ul>\n<li>kubectl get pods</li>\n</ul>\n<ul>\n<li>kubectl get deployments</li>\n</ul>\n<p>These commands let you see the deployments that have been created in the Cluster and the pods that these have produced. Let&#39;s look at the command output for this.</p>\n<p>Try Running: <code>kubectl get deployments</code></p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl get deployments"
+            }
+        ]
+    },
+    {
+        "preCommands": [],
+        "text": "<h1 id=\"basics-of-deployments\">Basics of Deployments</h1>\n<p>Great, now on the right-hand terminal window you can see the deployments that have been created on the system. Let&#39;s look at the pods that are a child of this deployment.</p>\n<p>Try Running: <code>kubectl get pods</code></p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl get pods"
+            }
+        ]
+    }
+]

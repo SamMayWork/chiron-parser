@@ -1,0 +1,68 @@
+[
+    {
+        "preCommands": [
+            {
+                "method": "APPLY",
+                "type": "PRECOMMAND",
+                "content": {
+                    "name": "content.yaml",
+                    "value": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: basic-deployment\n  namespace: default\n  labels:\n    app: basic-deployment\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: basic-deployment\n  template:\n    metadata:\n      labels:\n        app: basic-deployment\n    spec:\n      containers:\n      - name: basic-deployment\n        image: ssmay0/simple-container\n        ports:\n        - containerPort: 8080"
+                }
+            }
+        ],
+        "text": "<h2 id=\"tutorial\">Tutorial</h2>\n<p>This is the first stage of my awesome tutorial!</p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl get deployments"
+            },
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl get deployments"
+            },
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl get deployments"
+            },
+            {
+                "method": "CHECK",
+                "type": "POSTCHECK",
+                "kind": "POD",
+                "target": "basic-deployment",
+                "equalityOperator": "EQUALS",
+                "value": 3
+            },
+            {
+                "method": "CHECK",
+                "type": "POSTCHECK",
+                "kind": "POD",
+                "target": "some-other-deployment",
+                "equalityOperator": "EQUALS",
+                "value": 3
+            }
+        ]
+    },
+    {
+        "preCommands": [
+            {
+                "method": "APPLY",
+                "type": "PRECOMMAND",
+                "content": {
+                    "name": "content.yaml",
+                    "value": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: basic-deployment\n  namespace: default\n  labels:\n    app: basic-deployment\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: basic-deployment\n  template:\n    metadata:\n      labels:\n        app: basic-deployment\n    spec:\n      containers:\n      - name: basic-deployment\n        image: ssmay0/simple-container\n        ports:\n        - containerPort: 8080"
+                }
+            }
+        ],
+        "text": "<h1 id=\"tutorial-2\">Tutorial-2</h1>\n<p>This is the second stage of my awesome tutorial!</p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "ls -al"
+            }
+        ]
+    }
+]

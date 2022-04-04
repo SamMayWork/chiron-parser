@@ -1,0 +1,22 @@
+[
+    {
+        "preCommands": [
+            {
+                "method": "APPLY",
+                "type": "PRECOMMAND",
+                "content": {
+                    "name": "content.yaml",
+                    "value": "hello:\n  world: 1"
+                }
+            }
+        ],
+        "text": "<h1 id=\"hello\">Hello</h1>\n<p>Welcome to my awesome Tutorial!</p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "ls -al"
+            }
+        ]
+    }
+]

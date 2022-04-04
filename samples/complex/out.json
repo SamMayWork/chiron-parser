@@ -1,0 +1,38 @@
+[
+    {
+        "preCommands": [
+            {
+                "method": "APPLY",
+                "type": "PRECOMMAND",
+                "content": {
+                    "name": "content.yaml",
+                    "value": "hello:\n  world: 1"
+                }
+            },
+            {
+                "method": "APPLY",
+                "type": "PRECOMMAND",
+                "content": {
+                    "name": "deployment.yaml",
+                    "value": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: basic-deployment\n  namespace: default\n  labels:\n    app: basic-deployment\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: basic-deployment\n  template:\n    metadata:\n      labels:\n        app: basic-deployment\n    spec:\n      containers:\n      - name: basic-deployment\n        image: ssmay0/simple-container\n        ports:\n        - containerPort: 8080"
+                }
+            },
+            {
+                "method": "WAIT",
+                "type": "PRECOMMAND",
+                "kind": "POD",
+                "target": "basic-deployment",
+                "equalityOperator": "EQUALS",
+                "value": 3
+            }
+        ],
+        "text": "<h1 id=\"hello\">Hello</h1>\n<p>Welcome to my awesome Tutorial!</p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl get deployments"
+            }
+        ]
+    }
+]

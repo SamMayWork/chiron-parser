@@ -1,0 +1,31 @@
+{
+  "name": "chiron-parser",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "marked": "^4.0.12"
+  },
+  "devDependencies": {
+    "chai": "^4.3.6",
+    "eslint": "^7.32.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^5.2.0",
+    "mocha": "^9.2.2",
+    "nyc": "^15.1.0",
+    "sinon": "^13.0.1"
+  },
+  "scripts": {
+    "test": "nyc mocha test/**/*-test.js",
+    "start": "node index.js",
+    "compile-samples": "npm start samples/simple/simple.md && npm start samples/multipart/multipart.md && npm start samples/deployments-tutorial/deployments-tutorial.md && npm start samples/complex/complex.md"
+  },
+  "author": "Samuel May",
+  "license": "ISC"
+}
