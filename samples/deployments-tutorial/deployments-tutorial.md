@@ -1,3 +1,4 @@
+-> START PAGE
 -> APPLY basic-deployment.yaml
 -> WAIT pods NAME basic-deployment COUNT EQUALS 3
 
@@ -12,6 +13,8 @@ These commands let you see the deployments that have been created in the Cluster
 Try Running: `kubectl get deployments`
 
 -> COMMANDWAIT kubectl get deployments
+-> END PAGE
+-> START PAGE
 
 # Basics of Deployments
 
@@ -20,3 +23,4 @@ Great, now on the right-hand terminal window you can see the deployments that ha
 Try Running: `kubectl get pods`
 
 -> COMMANDWAIT kubectl get pods
+-> END PAGE

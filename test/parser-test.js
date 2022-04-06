@@ -158,6 +158,24 @@ describe('Parser Tests', () => {
       })
     })
 
+    it('Should return the correct object for START PAGE', () => {
+      let response = Parser.processCommand('-> START PAGE')
+      expect(response).to.deep.equal({ type: 'START' })
+      response = Parser.processCommand('->START PAGE')
+      expect(response).to.deep.equal({ type: 'START' })
+      response = Parser.processCommand('->STARTPAGE')
+      expect(response).to.deep.equal({ type: 'START' })
+    })
+
+    it('Should return the correct object for END PAGE', () => {
+      let response = Parser.processCommand('-> END PAGE')
+      expect(response).to.deep.equal({ type: 'END' })
+      response = Parser.processCommand('->END PAGE')
+      expect(response).to.deep.equal({ type: 'END' })
+      response = Parser.processCommand('->ENDPAGE')
+      expect(response).to.deep.equal({ type: 'END' })
+    })
+
     it('Should return undefined if the command could not be processed', () => {
       const response = Parser.processCommand('-> SOMETHING should do a COMMAND')
       expect(response).to.equal(undefined)
@@ -187,9 +205,11 @@ describe('Parser Tests', () => {
     })
 
     it('Should read a simple file and produce the correct chunking', () => {
-      const file = `-> APPLY fake.yaml
+      const file = `-> START PAGE
+-> APPLY fake.yaml
 ## Deployments
--> COMMANDWAIT kubectl get deployments`
+-> COMMANDWAIT kubectl get deployments
+-> END PAGE`
 
       const testParser = new Parser('./testdir')
       testParser.parseContent(file)
@@ -217,14 +237,16 @@ describe('Parser Tests', () => {
     })
 
     it('Should read a file with many precommands and produce the correct chunking', () => {
-      const file = `-> APPLY fake.yaml
+      const file = `-> START PAGE
+-> APPLY fake.yaml
 -> APPLY fake.yaml
 -> APPLY fake.yaml
 -> APPLY fake.yaml
 -> WAIT pod NAME basic-deployment COUNT EQUALS 3 
 -> WAIT pod NAME some-other-deployment COUNT EQUALS 1 
 ## Deployments
--> COMMANDWAIT kubectl get deployments`
+-> COMMANDWAIT kubectl get deployments
+-> END PAGE`
 
       const testParser = new Parser('./testdir')
       testParser.parseContent(file)
@@ -292,13 +314,15 @@ describe('Parser Tests', () => {
     })
 
     it('Should read a file with many post commands and produce the correct chunking', () => {
-      const file = `-> APPLY fake.yaml
+      const file = `-> START PAGE
+-> APPLY fake.yaml
 ## Deployments
 -> COMMANDWAIT kubectl get deployments
 -> COMMANDWAIT kubectl get deployments
 -> COMMANDWAIT kubectl get deployments
 -> CHECK pod NAME basic-deployment COUNT EQUALS 3 
--> CHECK pod NAME some-other-deployment COUNT EQUALS 3`
+-> CHECK pod NAME some-other-deployment COUNT EQUALS 3
+-> END PAGE`
 
       const testParser = new Parser('./testdir')
       testParser.parseContent(file)
@@ -352,12 +376,16 @@ describe('Parser Tests', () => {
     })
 
     it('Should read a multi-section file and produce the correct chunking', () => {
-      const file = `-> APPLY fake.yaml
+      const file = `-> START PAGE
+-> APPLY fake.yaml
 ## Deployments
 -> COMMANDWAIT kubectl get deployments
+-> END PAGE
+-> START PAGE
 -> APPLY fake.yaml
 ## Deployments 2
--> COMMANDWAIT kubectl get deployments`
+-> COMMANDWAIT kubectl get deployments
+-> END PAGE`
 
       const testParser = new Parser('./testdir')
       testParser.parseContent(file)
@@ -405,11 +433,15 @@ describe('Parser Tests', () => {
     })
 
     it('Should read a multi-section file that has chunks that do not start with precommands correctly', () => {
-      const file = `-> APPLY fake.yaml
+      const file = `-> START PAGE
+-> APPLY fake.yaml
 ## Deployments
 -> COMMANDWAIT kubectl get deployments
+-> END PAGE
+-> START PAGE
 ## Deployments 2
--> COMMANDWAIT kubectl get deployments`
+-> COMMANDWAIT kubectl get deployments
+-> END PAGE`
 
       const testParser = new Parser('./testdir')
       testParser.parseContent(file)

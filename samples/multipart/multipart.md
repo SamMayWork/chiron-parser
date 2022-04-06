@@ -1,3 +1,4 @@
+-> START PAGE
 -> APPLY content.yaml
 
 ## Tutorial
@@ -10,6 +11,9 @@ This is the first stage of my awesome tutorial!
 -> CHECK pod NAME basic-deployment COUNT EQUALS 3 
 -> CHECK pod NAME some-other-deployment COUNT EQUALS 3
 
+-> END PAGE
+-> START PAGE
+
 -> APPLY content.yaml
 
 # Tutorial-2
@@ -17,3 +21,4 @@ This is the first stage of my awesome tutorial!
 This is the second stage of my awesome tutorial!
 
 -> COMMANDWAIT ls -al
+-> END PAGE

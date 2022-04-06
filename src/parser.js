@@ -1,5 +1,6 @@
 const { marked } = require('marked')
 const fs = require('fs')
+const chalk = require('chalk')
 
 const CommandTypes = {
   PRECOMMAND: 'PRECOMMAND',
@@ -9,12 +10,7 @@ const CommandTypes = {
 class Parser {
   constructor (contentLocation) {
     this.contentLocation = contentLocation
-
-    this.chunks = [{
-      preCommands: [],
-      text: '',
-      postChecks: []
-    }]
+    this.chunks = []
   }
 
   /**
@@ -28,13 +24,18 @@ class Parser {
       if (line.substring(0, 2) === '->') {
         const processedCommand = Parser.processCommand(line, this.contentLocation)
 
-        if (this.chunks[0].postChecks.length > 0 &&
-          processedCommand.type === CommandTypes.PRECOMMAND) {
+        if (processedCommand.type === 'START') {
           this.chunks.unshift({
             preCommands: [],
             text: '',
             postChecks: []
           })
+          return
+        }
+
+        if (processedCommand.type === 'END') {
+          // End Commands are actually pointless but they make the code clearer
+          return
         }
 
         if (processedCommand.type === CommandTypes.PRECOMMAND) {
@@ -45,15 +46,6 @@ class Parser {
           this.chunks[0].postChecks.push(processedCommand)
         }
 
-        return
-      }
-
-      if (this.chunks[0].postChecks.length > 0) {
-        this.chunks.unshift({
-          preCommands: [],
-          text: marked.parse(line),
-          postChecks: []
-        })
         return
       }
 
@@ -69,6 +61,19 @@ class Parser {
    */
   static processCommand (commandString, contentLocation) {
     commandString = commandString.substring(2).trim()
+
+    if (commandString.toUpperCase().replaceAll(' ', '') === 'STARTPAGE') {
+      return {
+        type: 'START'
+      }
+    }
+
+    if (commandString.toUpperCase().replaceAll(' ', '') === 'ENDPAGE') {
+      return {
+        type: 'END'
+      }
+    }
+
     const commandWords = commandString.split(' ')
     const commandObj = {}
 
