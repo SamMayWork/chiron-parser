@@ -8,6 +8,12 @@ const sinon = require('sinon')
 
 describe('Parser Tests', () => {
   describe('processCommands', () => {
+    let parser
+
+    beforeEach(() => {
+      parser = new Parser()
+    })
+
     context('PreCommands', () => {
       let fsStub
 
@@ -29,7 +35,7 @@ describe('Parser Tests', () => {
           }
         }
 
-        const response = Parser.processCommand('-> APPLY fake.yaml')
+        const response = parser.processCommand('-> APPLY fake.yaml')
         expect(response).to.deep.equal(expectedObject)
       })
 
@@ -43,7 +49,7 @@ describe('Parser Tests', () => {
           }
         }
 
-        const response = Parser.processCommand('->AppLy fake.yaml')
+        const response = parser.processCommand('->AppLy fake.yaml')
         expect(response).to.deep.equal(expectedObject)
       })
 
@@ -57,7 +63,7 @@ describe('Parser Tests', () => {
           value: 3
         }
 
-        const response = Parser.processCommand('-> WAIT pod name basic-deployment count equals 3')
+        const response = parser.processCommand('-> WAIT pod name basic-deployment count equals 3')
         expect(response).to.deep.equal(expectedObject)
       })
 
@@ -72,7 +78,7 @@ describe('Parser Tests', () => {
           namespace: 'chiron'
         }
 
-        const response = Parser.processCommand('-> WAIT pod name basic-deployment count equals 3 NAMESPACE chiron')
+        const response = parser.processCommand('-> WAIT pod name basic-deployment count equals 3 NAMESPACE chiron')
         expect(response).to.deep.equal(expectedObject)
       })
 
@@ -86,7 +92,7 @@ describe('Parser Tests', () => {
           value: 3
         }
 
-        const response = Parser.processCommand('->wait pod name basic-deployment count equals 3 ')
+        const response = parser.processCommand('->wait pod name basic-deployment count equals 3 ')
         expect(response).to.deep.equal(expectedObject)
       })
     })
@@ -99,7 +105,7 @@ describe('Parser Tests', () => {
           value: 'kubectl get deployments'
         }
 
-        const response = Parser.processCommand('-> COMMANDWAIT kubectl get deployments')
+        const response = parser.processCommand('-> COMMANDWAIT kubectl get deployments')
         expect(response).to.deep.equal(expectedObject)
       })
 
@@ -110,7 +116,7 @@ describe('Parser Tests', () => {
           value: 'kubectl get deployments'
         }
 
-        const response = Parser.processCommand('->commandwait kubectl get deployments')
+        const response = parser.processCommand('->commandwait kubectl get deployments')
         expect(response).to.deep.equal(expectedObject)
       })
 
@@ -124,7 +130,7 @@ describe('Parser Tests', () => {
           value: 3
         }
 
-        const response = Parser.processCommand('-> CHECK pod NAME basic-deployment COUNT EQUALS 3 ')
+        const response = parser.processCommand('-> CHECK pod NAME basic-deployment COUNT EQUALS 3 ')
         expect(response).to.deep.equal(expectedObject)
       })
 
@@ -139,7 +145,7 @@ describe('Parser Tests', () => {
           namespace: 'chiron'
         }
 
-        const response = Parser.processCommand('-> CHECK pod NAME basic-deployment COUNT EQUALS 3 NAMESPACE chiron')
+        const response = parser.processCommand('-> CHECK pod NAME basic-deployment COUNT EQUALS 3 NAMESPACE chiron')
         expect(response).to.deep.equal(expectedObject)
       })
 
@@ -153,38 +159,60 @@ describe('Parser Tests', () => {
           value: 3
         }
 
-        const response = Parser.processCommand('->check pod NAME basic-deployment COUNT EQUALS 3 ')
+        const response = parser.processCommand('->check pod NAME basic-deployment COUNT EQUALS 3 ')
         expect(response).to.deep.equal(expectedObject)
       })
     })
 
+    context('Error Checking', () => {
+      it.only('Should error if a WAIT or CHECK command does not provide a valid kind', () => {
+        const processExitStub = sinon.stub(process, 'exit')
+        const consoleErrorStub = sinon.stub(console, 'error')
+        parser.processCommand('-> WAIT pods NAME basic-deployment COUNT EQUALS 3')
+        expect(consoleErrorStub.callCount).to.equal(1)
+        expect(processExitStub.callCount).to.equal(1)
+        processExitStub.restore()
+        consoleErrorStub.restore()
+      })
+    })
+
     it('Should return the correct object for START PAGE', () => {
-      let response = Parser.processCommand('-> START PAGE')
+      let response = parser.processCommand('-> START PAGE')
       expect(response).to.deep.equal({ type: 'START' })
-      response = Parser.processCommand('->START PAGE')
+      response = parser.processCommand('->START PAGE')
       expect(response).to.deep.equal({ type: 'START' })
-      response = Parser.processCommand('->STARTPAGE')
+      response = parser.processCommand('->STARTPAGE')
       expect(response).to.deep.equal({ type: 'START' })
     })
 
     it('Should return the correct object for END PAGE', () => {
-      let response = Parser.processCommand('-> END PAGE')
+      let response = parser.processCommand('-> END PAGE')
       expect(response).to.deep.equal({ type: 'END' })
-      response = Parser.processCommand('->END PAGE')
+      response = parser.processCommand('->END PAGE')
       expect(response).to.deep.equal({ type: 'END' })
-      response = Parser.processCommand('->ENDPAGE')
+      response = parser.processCommand('->ENDPAGE')
       expect(response).to.deep.equal({ type: 'END' })
     })
 
-    it('Should return undefined if the command could not be processed', () => {
-      const response = Parser.processCommand('-> SOMETHING should do a COMMAND')
-      expect(response).to.equal(undefined)
+    it('Should return throw an error if a command could not be processed', () => {
+      const processExitStub = sinon.stub(process, 'exit')
+      const consoleErrorStub = sinon.stub(console, 'error')
+      parser.processCommand('-> SOMETHING should do a COMMAND')
+      expect(consoleErrorStub.callCount).to.equal(1)
+      expect(processExitStub.callCount).to.equal(1)
+      processExitStub.restore()
+      consoleErrorStub.restore()
     })
 
-    it('Should return undefined if the file content could not be read for APPLY Commands', () => {
-      const fsStub = sinon.stub(fs, 'readFileSync').throws('BANG!')
-      const response = Parser.processCommand('-> APPLY fake.yaml')
-      expect(response).to.equal(undefined)
+    it('Should throw an error if the file content could not be read for APPLY Commands', () => {
+      const processExitStub = sinon.stub(process, 'exit')
+      const consoleErrorStub = sinon.stub(console, 'error')
+      const fsStub = sinon.stub(fs, 'readFileSync').throws(new Error('BANG!'))
+      parser.processCommand('-> APPLY fake.yaml')
+      expect(consoleErrorStub.callCount).to.equal(1)
+      expect(processExitStub.callCount).to.equal(1)
+      processExitStub.restore()
+      consoleErrorStub.restore()
       fsStub.restore()
     })
   })
