@@ -38,11 +38,6 @@ class Parser {
           return
         }
 
-        if (this.chunks.length === 0) {
-          console.error(chalk.bgRed('Commands being processed without chunk information, have you included a -> START PAGE ?'))
-          process.exit(1)
-        }
-
         if (processedCommand.type === CommandTypes.PRECOMMAND) {
           this.chunks[0].preCommands.push(processedCommand)
         }
