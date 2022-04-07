@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: basic-deployment
+  namespace: default
+  labels:
+    app: basic-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: basic-deployment
+  template:
+    metadata:
+      labels:
+        app: basic-deployment
+    spec:
+      containers:
+      - name: basic-deployment
+        image: ssmay0/simple-container
+        ports:
+        - containerPort: 8080

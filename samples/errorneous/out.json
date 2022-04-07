@@ -1,0 +1,16 @@
+[
+    {
+        "preCommands": [
+            {
+                "method": "WAIT",
+                "type": "PRECOMMAND",
+                "kind": "POD",
+                "target": "basic-deployment",
+                "equalityOperator": "EQUALS",
+                "value": null
+            }
+        ],
+        "text": "<p>Hello, World!</p>\n",
+        "postChecks": []
+    }
+]

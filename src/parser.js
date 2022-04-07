@@ -1,6 +1,5 @@
 const { marked } = require('marked')
 const fs = require('fs')
-const chalk = require('chalk')
 
 const CommandTypes = {
   PRECOMMAND: 'PRECOMMAND',
@@ -11,6 +10,8 @@ class Parser {
   constructor (contentLocation) {
     this.contentLocation = contentLocation
     this.chunks = []
+    this.allowedKinds = ['POD', 'DEPLOYMENT', 'SERVICE', 'SECRET', 'CONFIGMAP', 'REPLICASET']
+    this.allowedEqualityOperators = ['EQUALS', 'GREATERTHAN', 'LESSTHAN']
   }
 
   /**
@@ -20,9 +21,15 @@ class Parser {
    */
   parseContent (content) {
     const lines = content.split('\n')
-    lines.forEach(line => {
-      if (line.substring(0, 2) === '->') {
-        const processedCommand = Parser.processCommand(line, this.contentLocation)
+
+    for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
+      if (lines[lineNumber].substring(0, 2) === '->') {
+        let processedCommand
+        try {
+          processedCommand = this.processCommand(lines[lineNumber], this.contentLocation, lineNumber + 1)
+        } catch (error) {
+          throw new Error(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: ${error}`)
+        }
 
         if (processedCommand.type === 'START') {
           this.chunks.unshift({
@@ -30,12 +37,16 @@ class Parser {
             text: '',
             postChecks: []
           })
-          return
+          continue
         }
 
         if (processedCommand.type === 'END') {
-          // End Commands are actually pointless but they make the code clearer
-          return
+          if (this.chunks[0].preCommands.length === 0 &&
+            this.chunks[0].text === '' &&
+            this.chunks[0].postChecks.length === 0) {
+            throw new Error(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: Page closed but no PreCommands, PostChecks, or Text was provided`)
+          }
+          continue
         }
 
         if (processedCommand.type === CommandTypes.PRECOMMAND) {
@@ -46,20 +57,23 @@ class Parser {
           this.chunks[0].postChecks.push(processedCommand)
         }
 
-        return
+        continue
       }
 
-      this.chunks[0].text += marked.parse(line)
-    })
+      this.chunks[0].text += marked.parse(lines[lineNumber])
+    }
 
     this.chunks.reverse()
   }
 
   /**
-   * Takes Command Text and converts it into a command object
+   * Takes a command string and converts it into a command object
    * @param {String} commandString - Raw Command String
+   * @param {String} contentLocation - Directory to load files from (if required)
+   * @param {Number} lineNumber - Line number for errors/feedback
+   * @returns a command object
    */
-  static processCommand (commandString, contentLocation) {
+  processCommand (commandString, contentLocation, lineNumber) {
     commandString = commandString.substring(2).trim()
 
     if (commandString.toUpperCase().replaceAll(' ', '') === 'STARTPAGE') {
@@ -83,49 +97,69 @@ class Parser {
       ? commandObj.type = CommandTypes.PRECOMMAND
       : commandObj.type = CommandTypes.POSTCHECK
 
-    try {
-      switch (commandObj.method) {
-        case 'APPLY': {
-          commandObj.content = {
-            name: commandWords[1],
-            value: fs.readFileSync(`${contentLocation}/${commandWords[1]}`, 'utf8')
-          }
-          break
+    switch (commandObj.method) {
+      case 'APPLY': {
+        commandObj.content = {
+          name: commandWords[1],
+          value: fs.readFileSync(`${contentLocation}/${commandWords[1]}`, 'utf8')
         }
-        case 'WAIT': {
-          commandObj.kind = commandWords[1].toUpperCase()
-          commandObj.target = commandWords[3]
-          commandObj.equalityOperator = commandWords[5].toUpperCase()
-          commandObj.value = parseInt(commandWords[6])
-          if (commandWords[commandWords.length - 2] === 'NAMESPACE') {
-            commandObj.namespace = commandWords[commandWords.length - 1]
-          }
-          break
-        }
-        case 'COMMANDWAIT': {
-          commandObj.value = commandWords.slice(1).join(' ')
-          break
-        }
-        case 'CHECK': {
-          commandObj.kind = commandWords[1].toUpperCase()
-          commandObj.target = commandWords[3]
-          commandObj.equalityOperator = commandWords[5].toUpperCase()
-          commandObj.value = parseInt(commandWords[6])
-          if (commandWords[commandWords.length - 2] === 'NAMESPACE') {
-            commandObj.namespace = commandWords[commandWords.length - 1]
-          }
-          break
-        }
-        default: {
-          return
-        }
+        break
       }
-    } catch (error) {
-      console.error(`Could not format command ${commandString}, error: ${error}`)
-      return
+      case 'CHECK':
+      case 'WAIT': {
+        if (!this.allowedKinds.some((allowedKind) => allowedKind === commandWords[1].toUpperCase())) {
+          const matchedCommand = this.bestEffortMatch(commandWords[1].toUpperCase(), this.allowedKinds)
+
+          throw new Error(matchedCommand.length > 0
+            ? `Provided kind ${commandWords[1].toUpperCase()} does not match the accepted kinds, did you mean ${matchedCommand[0]}?`
+            : `Provided kind ${commandWords[1].toUpperCase()} does not match the accepted kinds ${this.allowedKinds.join(', ')}`)
+        }
+
+        if (!this.allowedEqualityOperators.some((allowedEqualityOperator) => allowedEqualityOperator === commandWords[5].toUpperCase())) {
+          const matchedEqualityOperator = this.bestEffortMatch(commandWords[5].toUpperCase(), this.allowedEqualityOperators)
+
+          throw new Error(matchedEqualityOperator.length > 0
+            ? `Provided operator ${commandWords[5].toUpperCase()} does not match the accepted operators, did you mean ${matchedEqualityOperator[0]}?`
+            : `Provided operator ${commandWords[5].toUpperCase()} does not match the accepted operator ${this.allowedEqualityOperators.join(', ')}`)
+        }
+
+        if (typeof parseInt(commandWords[6]) !== 'number' || isNaN(parseInt(commandWords[6]))) {
+          throw new Error(`Could not parse ${commandWords[6]} into a number`)
+        }
+
+        commandObj.kind = commandWords[1].toUpperCase()
+        commandObj.target = commandWords[3]
+        commandObj.equalityOperator = commandWords[5].toUpperCase()
+        commandObj.value = parseInt(commandWords[6])
+        if (commandWords[commandWords.length - 2] === 'NAMESPACE') {
+          commandObj.namespace = commandWords[commandWords.length - 1]
+        }
+        break
+      }
+      case 'COMMANDWAIT': {
+        commandObj.value = commandWords.slice(1).join(' ')
+
+        if (commandObj.value === '') {
+          throw new Error('No command specified for COMMANDWAIT')
+        }
+
+        break
+      }
+      default: {
+        throw new Error(`Could not match ${commandString} to a Command, accepted commands are APPLY, WAIT, COMMANDWAIT, CHECK, START PAGE, END PAGE`)
+      }
     }
 
     return commandObj
+  }
+
+  bestEffortMatch (value, options) {
+    return options.filter(allowedKind => {
+      if (allowedKind.includes(value) || value.includes(allowedKind)) {
+        return true
+      }
+      return false
+    })
   }
 }
 

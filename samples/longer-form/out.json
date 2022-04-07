@@ -1,0 +1,82 @@
+[
+    {
+        "preCommands": [],
+        "text": "<h1 id=\"introduction\">Introduction</h1>\n<p>In this tutorial, we&#39;ll be looking at the basics of how Kubernetes creates applications and runs them, and how some basic command line commands work.</p>\n<p>On the right hand side of the page is an interactive terminal that can be used to interact with the cluster, in fact, any commands work in this terminal!</p>\n<p>Give <code>ls -al</code> a go!</p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "ls -al"
+            }
+        ]
+    },
+    {
+        "preCommands": [
+            {
+                "method": "APPLY",
+                "type": "PRECOMMAND",
+                "content": {
+                    "name": "basic-deployment.yaml",
+                    "value": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: basic-deployment\n  namespace: default\n  labels:\n    app: basic-deployment\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: basic-deployment\n  template:\n    metadata:\n      labels:\n        app: basic-deployment\n    spec:\n      containers:\n      - name: basic-deployment\n        image: ssmay0/simple-container\n        ports:\n        - containerPort: 8080"
+                }
+            },
+            {
+                "method": "WAIT",
+                "type": "PRECOMMAND",
+                "kind": "POD",
+                "target": "basic-deployment",
+                "equalityOperator": "EQUALS",
+                "value": 3
+            }
+        ],
+        "text": "<h1 id=\"deployments\">Deployments</h1>\n<p>Awesome, now you can see the output of the command on the right hand side!</p>\n<p>Let&#39;s take a look at how Kubernetes deploys applications now so that they&#39;re actually doing aomething.</p>\n<p>Typically, applications are deployed to Kubernetes as part of a base <strong>resource</strong> called Deployments. We&#39;ve created a deployment on your cluster using this file:</p>\n<p>```YAML</p>\n<p>apiVersion: apps/v1</p>\n<p>kind: Deployment</p>\n<p>metadata:</p>\n<p>  name: basic-deployment</p>\n<p>  namespace: default</p>\n<p>  labels:</p>\n<pre><code>app: basic-deployment\n</code></pre>\n<p>spec:</p>\n<p>  replicas: 3</p>\n<p>  selector:</p>\n<pre><code>matchLabels:\n</code></pre>\n<pre><code>  app: basic-deployment\n</code></pre>\n<p>  template:</p>\n<pre><code>metadata:\n</code></pre>\n<pre><code>  labels:\n</code></pre>\n<pre><code>    app: basic-deployment\n</code></pre>\n<pre><code>spec:\n</code></pre>\n<pre><code>  containers:\n</code></pre>\n<pre><code>  - name: basic-deployment\n</code></pre>\n<pre><code>    image: ssmay0/simple-container\n</code></pre>\n<pre><code>    ports:\n</code></pre>\n<pre><code>    - containerPort: 8080\n</code></pre>\n<p>```</p>\n<p>You can now see what deployments are on the cluster using the command <code>kuebctl get deployments</code>, give it a go!</p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl get deployments"
+            }
+        ]
+    },
+    {
+        "preCommands": [],
+        "text": "<h1 id=\"deployments-continued\">Deployments Continued</h1>\n<p>The output from the command should look something like:</p>\n<p>```</p>\n<p>kubectl get deployments</p>\n<p>NAME               READY   UP-TO-DATE   AVAILABLE   AGE</p>\n<p>basic-deployment   3/3     3            3           13h</p>\n<p>```</p>\n<p>Here this shows that Kubernetes has created our deployment. <strong>The Deployment itself does nothing but define how the application should be deployed,</strong> the deployment simply isntructs Kubernetes to create your application. Your application is actually run by another resource called pods. The <code>READY 3/3</code> refers to how many pods are currently running your application.</p>\n<p>Run <code>kubectl get pods</code> to see the current pods on the cluster!</p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl get pods"
+            }
+        ]
+    },
+    {
+        "preCommands": [],
+        "text": "<h1 id=\"pods\">Pods</h1>\n<p>Your output should look like this:</p>\n<p>```</p>\n<p>kubectl get pods</p>\n<p>NAME                                READY   STATUS    RESTARTS   AGE</p>\n<p>basic-deployment-5cbbdc6d75-94sj7   1/1     Running   0          13h</p>\n<p>basic-deployment-5cbbdc6d75-dq2z6   1/1     Running   0          13h</p>\n<p>basic-deployment-5cbbdc6d75-krwj7   1/1     Running   0          13h</p>\n<p>```</p>\n<p>We can find out more information about each pod by running <code>kubectl describe pod &lt;pod name&gt;</code></p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl describe pod *"
+            }
+        ]
+    },
+    {
+        "preCommands": [],
+        "text": "<h1 id=\"pods\">Pods</h1>\n<p>Currently your application is being served by 3 pods, but we can tweak this number to our liking. Let&#39;s scale up your application so it&#39;s being run by 10 pods instead.</p>\n<p>Run <code>kubectl scale deployment basic-deployment --replicas 10</code></p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "kubectl scale deployment basic-deployment --replicas 10"
+            },
+            {
+                "method": "CHECK",
+                "type": "POSTCHECK",
+                "kind": "POD",
+                "target": "basic-deployment",
+                "equalityOperator": "EQUALS",
+                "value": 10
+            }
+        ]
+    }
+]

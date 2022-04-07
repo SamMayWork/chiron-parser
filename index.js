@@ -26,8 +26,14 @@ function main () {
   const locationElements = inputFile.split('/')
   const contentLocation = locationElements.slice(0, locationElements.length - 1).join('/')
 
-  const parser = new Parser(contentLocation)
-  parser.parseContent(content)
+  let parser
+  try {
+    parser = new Parser(contentLocation)
+    parser.parseContent(content)
+  } catch (error) {
+    console.error(chalk.bgRed(error))
+    process.exit(1)
+  }
 
   console.log(chalk.bgGreen('✅ - Parsed Content successfully, saving IL to file'))
 

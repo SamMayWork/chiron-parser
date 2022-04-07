@@ -1,6 +1,6 @@
 -> START PAGE
 -> APPLY basic-deployment.yaml
--> WAIT pods NAME basic-deployment COUNT EQUALS 3
+-> WAIT pod NAME basic-deployment COUNT EQUALS 3
 
 # Basics of Deployments
 
