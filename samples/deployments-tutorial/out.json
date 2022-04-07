@@ -12,7 +12,7 @@
             {
                 "method": "WAIT",
                 "type": "PRECOMMAND",
-                "kind": "PODS",
+                "kind": "POD",
                 "target": "basic-deployment",
                 "equalityOperator": "EQUALS",
                 "value": 3
