@@ -1,6 +1,5 @@
 const { marked } = require('marked')
 const fs = require('fs')
-const chalk = require('chalk')
 
 const CommandTypes = {
   PRECOMMAND: 'PRECOMMAND',
@@ -29,8 +28,7 @@ class Parser {
         try {
           processedCommand = this.processCommand(lines[lineNumber], this.contentLocation, lineNumber + 1)
         } catch (error) {
-          console.error(chalk.bgRed(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: ${error}`))
-          process.exit(1)
+          throw new Error(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: ${error}`)
         }
 
         if (processedCommand.type === 'START') {
@@ -43,7 +41,11 @@ class Parser {
         }
 
         if (processedCommand.type === 'END') {
-          // End Commands are actually pointless but they make the code clearer
+          if (this.chunks[0].preCommands.length === 0 &&
+            this.chunks[0].text === '' &&
+            this.chunks[0].postChecks.length === 0) {
+            throw new Error(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: Page closed but no PreCommands, PostChecks, or Text was provided`)
+          }
           continue
         }
 
@@ -103,6 +105,7 @@ class Parser {
         }
         break
       }
+      case 'CHECK':
       case 'WAIT': {
         if (!this.allowedKinds.some((allowedKind) => allowedKind === commandWords[1].toUpperCase())) {
           const matchedCommand = this.bestEffortMatch(commandWords[1].toUpperCase(), this.allowedKinds)
@@ -140,16 +143,6 @@ class Parser {
           throw new Error('No command specified for COMMANDWAIT')
         }
 
-        break
-      }
-      case 'CHECK': {
-        commandObj.kind = commandWords[1].toUpperCase()
-        commandObj.target = commandWords[3]
-        commandObj.equalityOperator = commandWords[5].toUpperCase()
-        commandObj.value = parseInt(commandWords[6])
-        if (commandWords[commandWords.length - 2] === 'NAMESPACE') {
-          commandObj.namespace = commandWords[commandWords.length - 1]
-        }
         break
       }
       default: {
