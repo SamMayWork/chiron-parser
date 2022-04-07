@@ -93,7 +93,7 @@ class Parser {
 
     commandObj.method = commandWords[0].toUpperCase()
 
-    commandObj.method === 'APPLY' || commandObj.method === 'WAIT'
+    commandObj.method === 'APPLY' || commandObj.method === 'WAIT' || commandObj.method === 'EXECCOMMAND'
       ? commandObj.type = CommandTypes.PRECOMMAND
       : commandObj.type = CommandTypes.POSTCHECK
 
@@ -136,11 +136,12 @@ class Parser {
         }
         break
       }
+      case 'EXECCOMMAND':
       case 'COMMANDWAIT': {
         commandObj.value = commandWords.slice(1).join(' ')
 
         if (commandObj.value === '') {
-          throw new Error('No command specified for COMMANDWAIT')
+          throw new Error('No command to execute specified')
         }
 
         break
