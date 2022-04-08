@@ -1,0 +1,19 @@
+[
+    {
+        "preCommands": [
+            {
+                "method": "EXECCOMMAND",
+                "type": "PRECOMMAND",
+                "value": "touch helloworld"
+            }
+        ],
+        "text": "<p>Something</p>\n",
+        "postChecks": [
+            {
+                "method": "COMMANDWAIT",
+                "type": "POSTCHECK",
+                "value": "ls -al"
+            }
+        ]
+    }
+]
