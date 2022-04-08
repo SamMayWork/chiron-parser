@@ -209,7 +209,7 @@ describe('Parser Tests', () => {
       })
 
       it('Should print an error when no command has been entered', () => {
-        expect(() => parser.processCommand('-> COMMANDWAIT')).throws('No command specified for COMMANDWAIT')
+        expect(() => parser.processCommand('-> COMMANDWAIT')).throws('No command to execute specified')
       })
     })
 
@@ -232,6 +232,34 @@ describe('Parser Tests', () => {
         expect(response).to.deep.equal({ type: 'END' })
         response = parser.processCommand('->ENDPAGE')
         expect(response).to.deep.equal({ type: 'END' })
+      })
+    })
+
+    context('EXECCOMMAND', () => {
+      it('Should create the correct object for EXECCOMMAND checks', () => {
+        const expectedObject = {
+          type: 'PRECOMMAND',
+          method: 'EXECCOMMAND',
+          value: 'ls -al'
+        }
+
+        const response = parser.processCommand('-> EXECCOMMAND ls -al')
+        expect(response).to.deep.equal(expectedObject)
+      })
+
+      it('Should create the correct object for EXECCOMMAND checks if the command is malformed', () => {
+        const expectedObject = {
+          type: 'PRECOMMAND',
+          method: 'EXECCOMMAND',
+          value: 'ls -al'
+        }
+
+        const response = parser.processCommand('->execcommand ls -al')
+        expect(response).to.deep.equal(expectedObject)
+      })
+
+      it('Should print an error when no command has been entered', () => {
+        expect(() => parser.processCommand('-> EXECCOMMAND')).throws('No command to execute specified')
       })
     })
 
