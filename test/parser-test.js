@@ -558,6 +558,45 @@ describe('Parser Tests', () => {
           ]
         })
       })
+
+      it('Should correctly read and process files that contain images', () => {
+        const file = `-> START PAGE
+![Some Image](tux.png)
+![Some Image](helloworld.png)
+-> END PAGE`
+
+        const testParser = new Parser('./testdir')
+        testParser.parseContent(file)
+        expect(testParser.chunks.length).to.equal(1)
+        expect(testParser.chunks[0]).to.deep.equal({
+          preCommands: [
+          ],
+          text: '<p><img src="tux.png" alt="Some Image"></p>\n<p><img src="helloworld.png" alt="Some Image"></p>\n',
+          postChecks: [
+          ],
+          assets: [
+            {
+              name: 'tux.png',
+              image: 'Hello, World!'
+            },
+            {
+              name: 'helloworld.png',
+              image: 'Hello, World!'
+            }
+          ]
+        })
+      })
+
+      it('Should throw if the image content could not be read', () => {
+        const file = `-> START PAGE
+![Some Image](tux.png)
+-> END PAGE`
+
+        fsStub.restore()
+        fsStub = sinon.stub(fs, 'readFileSync').throws(new Error('Bang!'))
+        const testParser = new Parser('./testdir')
+        expect(() => { testParser.parseContent(file) }).to.throw()
+      })
     })
 
     it('Should accept errors from processCommands and print useful error messages', () => {
