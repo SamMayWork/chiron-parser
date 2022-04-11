@@ -60,6 +60,26 @@ class Parser {
         continue
       }
 
+      // if the line contains an image, load it into the assets
+      if (lines[lineNumber].includes('![')) {
+        try {
+          let fileName = lines[lineNumber].split('(')[1]
+          fileName = fileName.substring(0, fileName.length - 1)
+          const fileContent = fs.readFileSync(`${this.contentLocation}/${fileName}`, 'base64')
+
+          if (!this.chunks[0].assets) {
+            this.chunks[0].assets = []
+          }
+
+          this.chunks[0].assets.push({
+            name: fileName,
+            image: fileContent
+          })
+        } catch (error) {
+          throw new Error(`Error reading image file: ${error}`)
+        }
+      }
+
       this.chunks[0].text += marked.parse(lines[lineNumber])
     }
 
