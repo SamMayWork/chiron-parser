@@ -22,6 +22,7 @@ class Parser {
   parseContent (content) {
     const lines = content.split('\n')
 
+    let processingChunk = false
     for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
       if (lines[lineNumber].substring(0, 2) === '->') {
         let processedCommand
@@ -32,6 +33,7 @@ class Parser {
         }
 
         if (processedCommand.type === 'START') {
+          processingChunk = true
           this.chunks.unshift({
             preCommands: [],
             text: '',
@@ -41,6 +43,7 @@ class Parser {
         }
 
         if (processedCommand.type === 'END') {
+          processingChunk = false
           if (this.chunks[0].preCommands.length === 0 &&
             this.chunks[0].text === '' &&
             this.chunks[0].postChecks.length === 0) {
@@ -80,7 +83,13 @@ class Parser {
         }
       }
 
-      this.chunks[0].text += marked.parse(lines[lineNumber])
+      if (this.chunks[0].postChecks.length > 0 && processingChunk) {
+        throw new Error(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: Can't enter Markdown content after POSTCOMMAND, did you mean to start a new page?`)
+      }
+
+      if (processingChunk) {
+        this.chunks[0].text += marked.parse(lines[lineNumber])
+      }
     }
 
     this.chunks.reverse()
@@ -113,11 +122,12 @@ class Parser {
 
     commandObj.method = commandWords[0].toUpperCase()
 
-    commandObj.method === 'APPLY' || commandObj.method === 'WAIT' || commandObj.method === 'EXECCOMMAND'
+    commandObj.method === 'APPLY' || commandObj.method === 'WAIT' || commandObj.method === 'EXECCOMMAND' || commandObj.method === 'INCLUDEFILE'
       ? commandObj.type = CommandTypes.PRECOMMAND
       : commandObj.type = CommandTypes.POSTCHECK
 
     switch (commandObj.method) {
+      case 'INCLUDEFILE':
       case 'APPLY': {
         commandObj.content = {
           name: commandWords[1],
@@ -166,8 +176,17 @@ class Parser {
 
         break
       }
+      case 'FILECHECK': {
+        commandObj.value = commandWords.slice(1).join(' ')
+
+        if (commandObj.value === '') {
+          throw new Error('No file to check specified')
+        }
+
+        break
+      }
       default: {
-        throw new Error(`Could not match ${commandString} to a Command, accepted commands are APPLY, WAIT, COMMANDWAIT, CHECK, START PAGE, END PAGE`)
+        throw new Error(`Could not match ${commandString} to a Command, accepted commands are APPLY, WAIT, COMMANDWAIT, CHECK, START PAGE, END PAGE, FILECHECK, INCLUDEFILE`)
       }
     }
 

@@ -263,6 +263,70 @@ describe('Parser Tests', () => {
       })
     })
 
+    context('FILECHECK', () => {
+      it('Should create the correct object for FILECHECK checks', () => {
+        const expectedObject = {
+          type: 'POSTCHECK',
+          method: 'FILECHECK',
+          value: 'somefile.txt'
+        }
+
+        const response = parser.processCommand('-> FILECHECK somefile.txt')
+        expect(response).to.deep.equal(expectedObject)
+      })
+
+      it('Should create the correct object for FILECHECK checks if the command is malformed', () => {
+        const expectedObject = {
+          type: 'POSTCHECK',
+          method: 'FILECHECK',
+          value: 'somefile.txt'
+        }
+
+        const response = parser.processCommand('->fileCheck somefile.txt')
+        expect(response).to.deep.equal(expectedObject)
+      })
+
+      it('Should print an error when no command has been entered', () => {
+        expect(() => parser.processCommand('-> FILECHECK')).throws('No file to check specified')
+      })
+    })
+
+    context('INCLUDEFILE', () => {
+      it('Should create the correct object for INCLUDEFILE', () => {
+        const expectedObject = {
+          type: 'PRECOMMAND',
+          method: 'INCLUDEFILE',
+          content: {
+            name: 'fake.txt',
+            value: 'Hello, World!'
+          }
+        }
+
+        const response = parser.processCommand('-> INCLUDEFILE fake.txt')
+        expect(response).to.deep.equal(expectedObject)
+      })
+
+      it('Should still read INCLUDEFILE Commands if the command is malformed', () => {
+        const expectedObject = {
+          type: 'PRECOMMAND',
+          method: 'INCLUDEFILE',
+          content: {
+            name: 'fake.txt',
+            value: 'Hello, World!'
+          }
+        }
+
+        const response = parser.processCommand('->includeFile fake.txt')
+        expect(response).to.deep.equal(expectedObject)
+      })
+
+      it('Should print an error and exit if the file could not be read', () => {
+        fsStub.restore()
+        fsStub = sinon.stub(fs, 'readFileSync').returns('Hello, World!').throws(new Error('Bang!'))
+        expect(() => parser.processCommand('-> INCLUDEFILE doesnotexist')).throws('Bang!')
+      })
+    })
+
     it('Should return throw an error if a command could not be processed', () => {
       expect(() => parser.processCommand('-> SOMETHING should do a COMMAND')).to.throw('Could not match SOMETHING should do a COMMAND to a Command, accepted commands are APPLY, WAIT, COMMANDWAIT, CHECK, START PAGE, END PAGE')
     })
@@ -596,6 +660,92 @@ describe('Parser Tests', () => {
         fsStub = sinon.stub(fs, 'readFileSync').throws(new Error('Bang!'))
         const testParser = new Parser('./testdir')
         expect(() => { testParser.parseContent(file) }).to.throw()
+      })
+
+      it('Should correctly process files including FILECHECK commands', () => {
+        const file = `-> START PAGE
+# Something
+-> FILECHECK someFile.txt
+-> END PAGE`
+
+        const testParser = new Parser('./testdir')
+        testParser.parseContent(file)
+        expect(testParser.chunks.length).to.equal(1)
+        expect(testParser.chunks[0]).to.deep.equal({
+          preCommands: [
+          ],
+          text: '<h1 id="something">Something</h1>\n',
+          postChecks: [
+            {
+              type: 'POSTCHECK',
+              method: 'FILECHECK',
+              value: 'someFile.txt'
+            }
+          ]
+        })
+      })
+
+      it('Should correctly process files that include other files from the directory', () => {
+        const file = `-> START PAGE
+-> INCLUDEFILE something.txt
+# Something
+-> END PAGE`
+
+        const testParser = new Parser('./testdir')
+        testParser.parseContent(file)
+        expect(testParser.chunks.length).to.equal(1)
+        expect(testParser.chunks[0]).to.deep.equal({
+          preCommands: [
+            {
+              method: 'INCLUDEFILE',
+              type: 'PRECOMMAND',
+              content: {
+                name: 'something.txt',
+                value: 'Hello, World!'
+              }
+            }
+          ],
+          text: '<h1 id="something">Something</h1>\n',
+          postChecks: [
+          ]
+        })
+      })
+
+      it('Should throw an error when some Markdown content has been entered after a POSTCOMMAND is run', () => {
+        const file = `-> START PAGE
+# Tutorial
+-> COMMANDWAIT kubectl get deployments
+# Also Tutorial
+-> END PAGE`
+
+        const testParser = new Parser('./testdir')
+        expect(() => { testParser.parseContent(file) }).to.throw()
+      })
+
+      it('Should not throw an error when subsequent POSTCHECKS are run', () => {
+        const file = `-> START PAGE
+
+# Rust Tutorial
+
+This is a really basic Rust Tutorial to show what's possible using this tool. In the rust-files directory, you'll find an example file called 'rust.rs' which can be compiled and executed on the system.
+
+Compile and execute the file using 'rustc rust-files/rust.rs' and then './rust'
+
+-> COMMANDWAIT rustc rust-files/rust.rs
+-> COMMANDWAIT ./rust
+-> END PAGE
+
+-> START PAGE
+
+# Rust Tutorial Continued
+
+Awesome, now we've seen a file get created and run. Let's make a new file that we can work on. Run 'touch new-file.rs'
+
+-> FILECHECK rust-files/new-file.rs
+-> END PAGE`
+
+        const testParser = new Parser('./testdir')
+        expect(() => { testParser.parseContent(file) }).to.not.throw()
       })
     })
 
