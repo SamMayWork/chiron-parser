@@ -34,7 +34,7 @@ If you'd like to verify your installation was successful, run the tests and if a
 
 ### Writing Content
 
-To write some content for the tool, create a directory within this repository with a Markdown file (for instance something like `rust-tutorial/tutorial.md`). Inside of this markdown file is where you will write your content. 
+To write some content for the tool, create a directory within this repository with a Markdown file (for instance something like `rust-basics/tutorial.md`). Inside of this markdown file is where you will write your content. 
 
 For more information about _how_ to write content in this file and the structure of the language, refer to [Markdown Structure](#markdown-structure)
 
