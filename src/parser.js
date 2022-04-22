@@ -23,6 +23,7 @@ class Parser {
     const lines = content.split('\n')
 
     let processingChunk = false
+    let codeBlockContent = ''
     for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
       if (lines[lineNumber].substring(0, 2) === '->') {
         let processedCommand
@@ -88,6 +89,23 @@ class Parser {
       }
 
       if (processingChunk) {
+        if (lines[lineNumber].includes('```') && codeBlockContent.length === 0) {
+          codeBlockContent += `${lines[lineNumber]}\n`
+          continue
+        }
+
+        if (lines[lineNumber].includes('```') && codeBlockContent.length > 0) {
+          codeBlockContent += `${lines[lineNumber]}\n`
+          this.chunks[0].text += marked.parse(codeBlockContent)
+          codeBlockContent = ''
+          continue
+        }
+
+        if (codeBlockContent.length > 0) {
+          codeBlockContent += `${lines[lineNumber]}\n`
+          continue
+        }
+
         this.chunks[0].text += marked.parse(lines[lineNumber])
       }
     }
@@ -102,7 +120,7 @@ class Parser {
    * @param {Number} lineNumber - Line number for errors/feedback
    * @returns a command object
    */
-  processCommand (commandString, contentLocation, lineNumber) {
+  processCommand (commandString, contentLocation) {
     commandString = commandString.substring(2).trim()
 
     if (commandString.toUpperCase().replaceAll(' ', '') === 'STARTPAGE') {
@@ -176,17 +194,12 @@ class Parser {
 
         break
       }
-      case 'FILECHECK': {
+      case 'CHECKCOMMANDOUT': {
         commandObj.value = commandWords.slice(1).join(' ')
-
-        if (commandObj.value === '') {
-          throw new Error('No file to check specified')
-        }
-
         break
       }
       default: {
-        throw new Error(`Could not match ${commandString} to a Command, accepted commands are APPLY, WAIT, COMMANDWAIT, CHECK, START PAGE, END PAGE, FILECHECK, INCLUDEFILE`)
+        throw new Error(`Could not match ${commandString} to a Command, accepted commands are APPLY, WAIT, COMMANDWAIT, CHECK, START PAGE, END PAGE, INCLUDEFILE, CHECKCOMMANDOUT`)
       }
     }
 

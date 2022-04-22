@@ -11,7 +11,6 @@ This is the first stage of my awesome tutorial!
 -> COMMANDWAIT kubectl get deployments
 -> CHECK pod NAME basic-deployment COUNT EQUALS 3
 -> CHECK pod NAME some-other-deployment COUNT EQUALS 3
-
 -> END PAGE
 -> START PAGE
 
