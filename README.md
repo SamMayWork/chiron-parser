@@ -108,6 +108,6 @@ Some sample Markdown documents can found in the `samples/` directory, these show
 ---
 ## Sharing the JSON with Students
 
-Students do _not_ need to have this tool installed, they only require the client container (more information available [here]()). To share the content created here, the compiled JSON file must be uploaded somewhere accessible over the public internet without authentication.
+Students do _not_ need to have this tool installed, they only require the client container (more information available [here](https://github.com/SamMayWork/chiron-client/blob/main/README.md)). To share the content created here, the compiled JSON file must be uploaded somewhere accessible over the public internet without authentication.
 
-The easiest way to share the compiled file is using [PasteBin](https://pastebin.com/) as this makes the file publically accessible without any required authentication.
+The easiest way to share the compiled file is using [GitHub Gists](https://gist.github.com/) as this makes the file publiclly accessible without any required authentication. Create a 'secret' gist to share the content and then give the url (without the preceeding `https://`) to the student who will then be able to load the content.
