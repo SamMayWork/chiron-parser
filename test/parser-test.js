@@ -322,7 +322,7 @@ describe('Parser Tests', () => {
 
     beforeEach(() => {
       fsStub = sinon.stub(fs, 'readFileSync').callsFake((filename) => {
-        if (filename.includes('./testdir')) {
+        if (filename.includes('testdir')) {
           return 'Hello, World!'
         }
       })

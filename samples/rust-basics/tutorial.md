@@ -19,7 +19,6 @@ Let's get used to using the terminal now, try the command `ls -al`!
 Before we dig into writing some code, let's take a look at a Rust program that's on the machine and see how we can turn our code in a file into something that we can actually run.
 
 Rust is a compiled language, meaning we need to follow the process below:
-
 ![Compile Image](./compiler.png)
 
 There is a file in the current directory called `helloworld.rs`, we're going to take this file, compile it, and then run it.

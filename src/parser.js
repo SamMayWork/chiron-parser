@@ -1,5 +1,6 @@
 const { marked } = require('marked')
 const fs = require('fs')
+const path = require('path')
 
 const CommandTypes = {
   PRECOMMAND: 'PRECOMMAND',
@@ -73,7 +74,12 @@ class Parser {
         try {
           let fileName = lines[lineNumber].split('(')[1]
           fileName = fileName.substring(0, fileName.length - 1)
-          const fileContent = fs.readFileSync(`${this.contentLocation}/${fileName}`, 'base64')
+
+          const contentPath = this.contentLocation
+            ? path.join(this.contentLocation, fileName)
+            : fileName
+
+          const fileContent = fs.readFileSync(contentPath, 'base64')
 
           if (!this.chunks[0].assets) {
             this.chunks[0].assets = []
@@ -151,9 +157,13 @@ class Parser {
     switch (commandObj.method) {
       case 'INCLUDEFILE':
       case 'APPLY': {
+        const contentPath = contentLocation
+          ? path.join(contentLocation, commandWords[1])
+          : commandWords[1]
+
         commandObj.content = {
           name: commandWords[1],
-          value: fs.readFileSync(`${contentLocation}/${commandWords[1]}`, 'utf8')
+          value: fs.readFileSync(contentPath, 'utf8')
         }
         break
       }
