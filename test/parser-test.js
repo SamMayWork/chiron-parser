@@ -723,6 +723,30 @@ Hello, World!
         testParser.parseContent(file)
         expect(testParser.chunks[0].text.includes('<code>')).to.equal(true)
       })
+
+      it('Should ignore comments', () => {
+        const file = `-> START PAGE
+# Welcome
+<!--- Something ---> 
+-> COMMANDWAIT ls -al
+-> END PAGE`
+
+        const testParser = new Parser('./testdir')
+        testParser.parseContent(file)
+        expect(testParser.chunks.length).to.equal(1)
+        expect(testParser.chunks[0]).to.deep.equal({
+          preCommands: [
+          ],
+          text: '<h1 id="welcome">Welcome</h1>\n',
+          postChecks: [
+            {
+              method: 'COMMANDWAIT',
+              type: 'POSTCHECK',
+              value: 'ls -al'
+            }
+          ]
+        })
+      })
     })
 
     it('Should accept errors from processCommands and print useful error messages', () => {
@@ -734,7 +758,7 @@ Hello, World!
 
       const testParser = new Parser('./testdir')
       const processCommandStub = sinon.stub(testParser, 'processCommand').throws('BANG!')
-      expect(() => testParser.parseContent(file)).to.throw('Error on Line 0\nLine was: -> START PAGE\nError was: BANG!')
+      expect(() => testParser.parseContent(file)).to.throw('Error on Line 1\nLine was: -> START PAGE\nError was: BANG!')
       processCommandStub.restore()
     })
 
@@ -743,7 +767,7 @@ Hello, World!
 -> END PAGE`
 
       const testParser = new Parser('./testdir')
-      expect(() => testParser.parseContent(file)).to.throw('Error on Line 1\nLine was: -> END PAGE\nError was: Page closed but no PreCommands, PostChecks, or Text was provided')
+      expect(() => testParser.parseContent(file)).to.throw('Error on Line 2\nLine was: -> END PAGE\nError was: Page closed but no PreCommands, PostChecks, or Text was provided')
     })
   })
 })

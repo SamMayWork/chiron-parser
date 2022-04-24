@@ -32,6 +32,19 @@ function main () {
     parser.parseContent(content)
   } catch (error) {
     console.error(chalk.bgRed(error))
+
+    if (process.env.COMPILE_REPORT) {
+      try {
+        fs.writeFileSync(`compile-failed-${Date.now()}.json`, JSON.stringify({
+          error: error.message,
+          contentLocation,
+          content
+        }, null, 2))
+      } catch (error) {
+        console.error(chalk.bgRed('Was unable to successfully save compile information to disk'))
+      }
+    }
+
     process.exit(1)
   }
 

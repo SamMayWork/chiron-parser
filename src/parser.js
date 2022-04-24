@@ -25,12 +25,16 @@ class Parser {
     let processingChunk = false
     let codeBlockContent = ''
     for (let lineNumber = 0; lineNumber < lines.length; lineNumber++) {
+      if (lines[lineNumber].substring(0, 3) === '<!-') {
+        continue
+      }
+
       if (lines[lineNumber].substring(0, 2) === '->') {
         let processedCommand
         try {
           processedCommand = this.processCommand(lines[lineNumber], this.contentLocation, lineNumber + 1)
         } catch (error) {
-          throw new Error(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: ${error}`)
+          throw new Error(`Error on Line ${lineNumber + 1}\nLine was: ${lines[lineNumber]}\nError was: ${error}`)
         }
 
         if (processedCommand.type === 'START') {
@@ -48,7 +52,7 @@ class Parser {
           if (this.chunks[0].preCommands.length === 0 &&
             this.chunks[0].text === '' &&
             this.chunks[0].postChecks.length === 0) {
-            throw new Error(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: Page closed but no PreCommands, PostChecks, or Text was provided`)
+            throw new Error(`Error on Line ${lineNumber + 1}\nLine was: ${lines[lineNumber]}\nError was: Page closed but no PreCommands, PostChecks, or Text was provided`)
           }
           continue
         }
@@ -80,12 +84,12 @@ class Parser {
             image: fileContent
           })
         } catch (error) {
-          throw new Error(`Error reading image file: ${error}`)
+          throw new Error(`Error reading image file: ${error}, loaded as part of line ${lineNumber + 1}`)
         }
       }
 
       if (this.chunks[0].postChecks.length > 0 && processingChunk) {
-        throw new Error(`Error on Line ${lineNumber}\nLine was: ${lines[lineNumber]}\nError was: Can't enter Markdown content after POSTCOMMAND, did you mean to start a new page?`)
+        throw new Error(`Error on Line ${lineNumber + 1}\nLine was: ${lines[lineNumber]}\nError was: Can't enter Markdown content after POSTCOMMAND, did you mean to start a new page?`)
       }
 
       if (processingChunk) {
